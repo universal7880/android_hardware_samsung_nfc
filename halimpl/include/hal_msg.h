@@ -65,6 +65,10 @@ typedef struct {
 #define NCI_CORE_RESET 0x00
 #define NCI_CORE_INIT 0x01
 
+#define NCI_RF_DISCOVER_SELECT 0x04
+#define NCI_INTERFACE_FRAME 0x01
+#define NCI_INTERFACE_MIFARE 0x81
+
 #define NCI_PROP_AGAIN                                     \
   0x01 /* This prop oid is used only for N3 (sleep mode) \ \
         */

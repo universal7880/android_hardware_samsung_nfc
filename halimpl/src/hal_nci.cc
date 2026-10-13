@@ -19,6 +19,7 @@
 #include <hardware/nfc.h>
 #include <string.h>
 
+#include "config.h"
 #include "device.h"
 #include "hal.h"
 #include "hal_msg.h"
@@ -147,7 +148,25 @@ void nci_init_timeout(__attribute__((unused)) void* param) {
   OSI_loge("need to retry!");
 }
 
+static void nfc_hal_select_mifare_interface(tNFC_NCI_PKT* pkt) {
+  if (NCI_MT(pkt) != NCI_MT_CMD || NCI_PBF(pkt) != NCI_PBF_LAST ||
+      NCI_GID(pkt) != NCI_GID_RF_MANAGE ||
+      NCI_OID(pkt) != NCI_RF_DISCOVER_SELECT || NCI_LEN(pkt) != 3 ||
+      pkt->payload[2] != NCI_INTERFACE_MIFARE) {
+    return;
+  }
+
+  unsigned long use_frame = 0;
+  if (GetNumValue(NAME_MIFARE_FRAME_INTERFACE, &use_frame, sizeof(use_frame)) &&
+      use_frame == 1) {
+    // Legacy Samsung controllers use Frame instead of the NXP MIFARE interface.
+    OSI_logd("Selecting MIFARE through the Frame RF interface");
+    pkt->payload[2] = NCI_INTERFACE_FRAME;
+  }
+}
+
 bool nfc_hal_prehandler(tNFC_NCI_PKT* pkt) {
+  nfc_hal_select_mifare_interface(pkt);
   if (NCI_MT(pkt) == NCI_MT_NTF) {
     if (NCI_GID(pkt) == NCI_GID_PROP) {
       /* Again procedure. only for N3 isN3group */
